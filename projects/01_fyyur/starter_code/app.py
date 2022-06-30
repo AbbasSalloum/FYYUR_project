@@ -28,7 +28,7 @@ db = SQLAlchemy(app)
 migrate=Migrate(app,db)
 
 
-# TODO: connect to a local postgresql database
+
 
 #----------------------------------------------------------------------------#
 # Models.
@@ -45,8 +45,13 @@ class Venue(db.Model):
     phone = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    website=db.Column(db.String(120), nullable=False)
+    shows=db.relationship('Show' , backref='venue' , lazy=False)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    def __repr__(self):
+      return f'<Venue: {self.id}, name: {self.name}, city: {self.city}, state: {self.state}, address: {self.address}, phone: {self.phone}, image_link: {self.image_link}, facebook_link: {self.facebook_link}, genres: {self.genres}, website: {self.website}, shows: {self.shows}>'
+
+    
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -59,10 +64,24 @@ class Artist(db.Model):
     genres = db.Column(db.String(120))
     image_link = db.Column(db.String(500))
     facebook_link = db.Column(db.String(120))
+    website = db.Column(db.String(120))
+    shows = db.relationship('Show', backref='artist', lazy=False)
 
-    # TODO: implement any missing fields, as a database migration using Flask-Migrate
+    def __repr__(self):
+      return f'<Artist: {self.id}, name: {self.name}, city: {self.city}, state: {self.state}, phone: {self.phone}, genres: {self.genres}, image_link: {self.image_link}, facebook_link: {self.facebook_link}, shows: {self.shows}>'
 
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+    
+
+class Show(db.Model):
+  __tablename__='show'
+  id=db.Column(db.Integer, primary_key=True)
+  date=db.Column(db.DateTime,nullable=False)
+  artist_id=db.Column(db.Integer,db.ForeignKey("Artist.id"), nullable=False)
+  venue_id=db.Column(db.Integer,db.ForeignKey("Venue.id"),nullable=False)
+  
+  def __repr__(self):
+    return f'<Show {self.id} , date: {self.date} , artist_id: {self.artist} , venue_id: {self.venue_id} >'
+
 
 #----------------------------------------------------------------------------#
 # Filters.
