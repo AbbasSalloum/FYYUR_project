@@ -111,43 +111,62 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
-  return render_template('pages/venues.html', areas=data);
+  #num_shows should be aggregated based on number of upcoming shows per venue.
+  areas = []
+  data = Venue.query.order_by('city', 'state', 'name').all()
+  for venue in data:
+    area_item = {}
+    pos_area = -1
+    if len(areas) == 0:
+      pos_area = 0
+      area_item = {
+        "city": venue.city,
+        "state": venue.state,
+        "venues": []
+      }
+      areas.append(area_item)
+    else:
+      for i, area in enumerate(areas):
+        if area['city'] == venue.city and area['state'] == venue.state:
+          pos_area = i
+          break
+      if pos_area < 0:
+        area_item = {
+          "city": venue.city,
+          "state": venue.state,
+          "venues": []
+        }
+        areas.append(area_item)
+        pos_area = len(areas) - 1
+      else:
+        area_item = areas[pos_area]
+    v = {
+        "id": venue.id,
+        "name": venue.name,
+        "num_upcoming_shows": 4
+      }
+    area_item['venues'].append(v)
+    areas[pos_area] = area_item
+
+  return render_template('pages/venues.html', areas=areas)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-  # TODO: implement search on venues with partial string search. Ensure it is case-insensitive.
-  # seach for Hop should return "The Musical Hop".
-  # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
+  search_term = request.form.get('search_term')
+  search = "%{}%".format(search_term.replace(" ", "\ "))
+  data = Venue.query.filter(Venue.name.match(search)).order_by('name').all()
+  items = []
+  for row in data:
+    aux = {
+      "id": row.id,
+      "name": row.name,
+      "num_upcoming_shows": len(row.shows)
+    }
+    items.append(aux)
+
   response={
-    "count": 1,
-    "data": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
+    "count": len(items),
+    "data": items
   }
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
